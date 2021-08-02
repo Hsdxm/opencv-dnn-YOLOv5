@@ -4,12 +4,16 @@ project(YOLOv5-dnn)
 
 find_package(OpenCV)
 
-include_directories(${OpenCV_INCLUDE_DIRS})
+include_directories(${OpenCV_INCLUDE_DIRS} ${CMAKE_SOURCE_DIR}/inc)
 
 file(GLOB  src  ${CMAKE_SOURCE_DIR}/src/*.cpp)
-add_executable(demo ${src})
+add_library(detect SHARED ${src})
 
-target_link_libraries(demo ${OpenCV_LIBS}
+add_executable(demo ${CMAKE_SOURCE_DIR}/demo/main.cpp)
+
+target_link_libraries(demo 
+	detect
+	${OpenCV_LIBS}
 	pthread 
 	dl
 	m)

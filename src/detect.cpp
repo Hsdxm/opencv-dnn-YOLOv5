@@ -1,20 +1,4 @@
-#include <iostream>
-#include <vector>
-using namespace std;
-#include <opencv2/opencv.hpp>
-
-using namespace cv;
-
-#define	SIGMOID(x) (float)(1.0f/(1+exp(-x)))
-
-typedef struct {
-	int left;
-	int top;
-	int right;
-	int bottom;
-	float score;
-	int type;
-} BBox;
+#include "detect.h"
 
 std::vector<cv::String> getOutputsNames(const cv::dnn::Net& net)
 {
@@ -67,27 +51,6 @@ void dumpBBoxes(vector<BBox> boxes)
 	for (size_t i=0;i<boxes.size();i++)
 		printf("%d  %d  %d  %d\n", boxes[i].left, boxes[i].top,boxes[i].right,boxes[i].bottom);
 }
-
-
-class YOLOv5
-{
-	private:
-		int				mInputWidth;
-		int				mInputHeight;
-		int				mClassNum;
-		vector<int>		mScales;
-		vector<int>		mOutputWidth;
-		vector<int>		mOutputHeight;
-		vector<int>		mAnchors;
-		dnn::Net		mNet;
-
-	public:
-		YOLOv5(char *model, int width, int height, int classNum, int *anchors);
-		~YOLOv5();
-		Mat preProcess(Mat img);
-		vector<BBox> process(Mat img);
-		vector<BBox> postProcess(vector<Mat> outputs);
-};
 
 YOLOv5::YOLOv5(char *model, int width, int height, int classNum, int *anchors)
 {
@@ -210,6 +173,7 @@ vector<BBox> YOLOv5::process(Mat img)
 	return boxes;
 }
 
+/*
 int main(int argc, char** argv)
 {
 	int anchors[] = {10,13, 16,30, 33,23, 30,61, 62,45, 59,119, 116,90, 156,198, 373,326};
@@ -232,3 +196,4 @@ int main(int argc, char** argv)
 	waitKey(0);
     return 0;
 }
+*/
