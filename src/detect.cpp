@@ -80,6 +80,7 @@ YOLOv5::~YOLOv5()
 Mat YOLOv5::preProcess(Mat img)
 {
 	Mat dst = Mat::zeros(mInputHeight,mInputWidth,CV_8UC3);;
+#if USE_LETTERBOX
 	float scaleSize = min(1.*mInputWidth/img.cols, 1.*mInputHeight/img.rows);
 	int dstWidth = img.cols * scaleSize;
 	int dstHeight = img.rows*scaleSize;
@@ -90,6 +91,10 @@ Mat YOLOv5::preProcess(Mat img)
 	dst.setTo(Scalar(127,127,127));
 	Rect r = Rect(wIndex,hIndex,dstWidth,dstHeight);
 	resized.copyTo(dst(r));
+#else
+	resize(img,dst,Size(mInputWidth,mInputHeight));
+#endif
+
 	return dst;
 }
 
@@ -111,17 +116,18 @@ vector<BBox> YOLOv5::postProcess(vector<Mat> outputs)
 				for (size_t n=0;n<mOutputWidth[i];n++)
 				{
 					float objConf = SIGMOID(data[index+4]);
-					if (objConf > 0.1)
+					if (objConf > 0.3)
 					{
+					//	printf("%u %u %u %u\n", i,d,m,n);
 						float x = (float)(SIGMOID(data[index+0]) * 2 - 0.5 + n) * mScales[i];
 						float y = (float)(SIGMOID(data[index+1]) * 2 - 0.5 + m) * mScales[i];
 						float w = (float)pow(SIGMOID(data[index+2])*2,2) * mAnchors[6*i+2*d];
 						float h = (float)pow(SIGMOID(data[index+3])*2,2) * mAnchors[6*i+2*d+1];
 						//类别
-						for (size_t c = 0;c<10;c++)
+						for (size_t c = 0;c<mClassNum;c++)
 						{
 							float score = SIGMOID(data[index+5+c]) * objConf;
-							if (score  > 0.1)
+							if (score  > 0.3)
 							{
 								BBox box;
 								box.left = x-w/2.;
@@ -134,7 +140,7 @@ vector<BBox> YOLOv5::postProcess(vector<Mat> outputs)
 							}
 						}
 					}
-					index += (5+10);
+					index += (5+mClassNum);
 				}
 			}
 		}
@@ -158,6 +164,8 @@ vector<BBox> YOLOv5::process(Mat img)
 	mNet.forward(outputs, getOutputsNames(mNet));
 	vector<BBox> boxes = postProcess(outputs);
 	
+	printf("[%s %d]\n", __func__, __LINE__);
+#if USE_LETTERBOX
 	float scaleSize = min(1.*mInputWidth/img.cols, 1.*mInputHeight/img.rows);
 	int dstWidth = img.cols * scaleSize;
 	int dstHeight = img.rows*scaleSize;
@@ -170,6 +178,15 @@ vector<BBox> YOLOv5::process(Mat img)
 		boxes[i].top  = (boxes[i].top - hIndex) * img.rows / dstHeight;
 		boxes[i].bottom  = (boxes[i].bottom - hIndex) * img.rows / dstHeight;
 	}
+#else
+	for (size_t i=0;i<boxes.size();i++)
+	{
+		boxes[i].left = boxes[i].left * img.cols/mInputWidth;
+		boxes[i].right = boxes[i].right * img.cols/mInputWidth;
+		boxes[i].top = boxes[i].top * img.rows / mInputHeight;
+		boxes[i].bottom = boxes[i].bottom * img.rows / mInputHeight;
+	}
+#endif
 	return boxes;
 }
 

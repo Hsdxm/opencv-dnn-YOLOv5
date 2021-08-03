@@ -10,6 +10,8 @@ using namespace cv;
 
 #define	SIGMOID(x) (float)(1.0f/(1+exp(-x)))
 
+#define	 USE_LETTERBOX	0
+
 typedef struct {
 	int left;
 	int top;
