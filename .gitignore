@@ -1,2 +1,4 @@
 build/
-
+images/
+images_1/
+*.onnx

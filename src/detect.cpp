@@ -16,8 +16,8 @@ std::vector<cv::String> getOutputsNames(const cv::dnn::Net& net)
         for (size_t i = 0; i < outLayers.size(); ++i)
         names[i] = layersNames[outLayers[i] - 1];
     }
-	for (auto a=names.begin();a!=names.end();a++)
-		cout << *a <<endl;
+//	for (auto a=names.begin();a!=names.end();a++)
+//		cout << *a <<endl;
     return names;
 }
 
@@ -40,7 +40,7 @@ void doNMS(vector<BBox>& boxes)
 {
 	for (size_t i=0;i<boxes.size();i++)
 		for (size_t j=i+1;j<boxes.size();j++)
-			if (iou(boxes[i],boxes[j]) > 0.45)
+			if (iou(boxes[i],boxes[j]) > 0.85)
 			{
 				boxes.erase(boxes.begin()+j--);
 			}
@@ -116,7 +116,7 @@ vector<BBox> YOLOv5::postProcess(vector<Mat> outputs)
 				for (size_t n=0;n<mOutputWidth[i];n++)
 				{
 					float objConf = SIGMOID(data[index+4]);
-					if (objConf > 0.3)
+					if (objConf >= 0.01)
 					{
 					//	printf("%u %u %u %u\n", i,d,m,n);
 						float x = (float)(SIGMOID(data[index+0]) * 2 - 0.5 + n) * mScales[i];
@@ -127,7 +127,7 @@ vector<BBox> YOLOv5::postProcess(vector<Mat> outputs)
 						for (size_t c = 0;c<mClassNum;c++)
 						{
 							float score = SIGMOID(data[index+5+c]) * objConf;
-							if (score  > 0.3)
+							if (score  >= 0.01)
 							{
 								BBox box;
 								box.left = x-w/2.;
@@ -164,7 +164,6 @@ vector<BBox> YOLOv5::process(Mat img)
 	mNet.forward(outputs, getOutputsNames(mNet));
 	vector<BBox> boxes = postProcess(outputs);
 	
-	printf("[%s %d]\n", __func__, __LINE__);
 #if USE_LETTERBOX
 	float scaleSize = min(1.*mInputWidth/img.cols, 1.*mInputHeight/img.rows);
 	int dstWidth = img.cols * scaleSize;
